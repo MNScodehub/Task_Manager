@@ -595,11 +595,11 @@ function Dashboard({ onNavigate }: DashboardProps) {
                     <div className="flex items-center justify-between mb-2">
                       <button
                         onClick={() => generateSubtasks(task.id, task.title)}
-                        disabled={generatingAI[task.id]}
+                        disabled={generatingAI[task.id] || subtasks[task.id]?.length > 0}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Sparkles className="w-4 h-4" />
-                        {generatingAI[task.id] ? 'Generating...' : 'Generate Subtasks with AI'}
+                        {generatingAI[task.id] ? 'Generating...' : subtasks[task.id]?.length > 0 ? 'Subtasks Generated' : 'Generate Subtasks with AI'}
                       </button>
 
                       {(subtasks[task.id]?.length > 0 || aiSuggestions[task.id]?.length > 0) && (
