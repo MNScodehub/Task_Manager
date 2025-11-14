@@ -499,15 +499,6 @@ function Dashboard({ onNavigate }: DashboardProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={handleLogout}
-            className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
-            title="Logout"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
-        </div>
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
           <div className="flex-1">
             <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2">
@@ -560,9 +551,10 @@ function Dashboard({ onNavigate }: DashboardProps) {
         </div>
 
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Task Summary</h2>
-            <p className="text-sm text-gray-600">
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Task Summary</h2>
+              <p className="text-sm text-gray-600">
               {tasks.length === 0
                 ? (userName
                     ? `${userName}, start logging your tasks to track your accomplishments and see them visualized here!`
@@ -571,23 +563,31 @@ function Dashboard({ onNavigate }: DashboardProps) {
                     ? `${userName}, here's how your tasks are organized. Click any number to filter!`
                     : 'Click on any cell to filter your tasks by priority and status')
               }
-            </p>
-            {(filterPriority || filterStatus) && (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-sm text-blue-600 font-medium">
-                  Filtering: {filterPriority ? `${filterPriority} priority` : ''} {filterPriority && filterStatus ? '&' : ''} {filterStatus ? `${filterStatus} status` : ''}
-                </span>
-                <button
-                  onClick={() => {
-                    setFilterPriority(null);
-                    setFilterStatus(null);
-                  }}
-                  className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-                >
-                  Clear Filter
-                </button>
-              </div>
-            )}
+              </p>
+              {(filterPriority || filterStatus) && (
+                <div className="mt-3 flex items-center gap-2">
+                  <span className="text-sm text-blue-600 font-medium">
+                    Filtering: {filterPriority ? `${filterPriority} priority` : ''} {filterPriority && filterStatus ? '&' : ''} {filterStatus ? `${filterStatus} status` : ''}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setFilterPriority(null);
+                      setFilterStatus(null);
+                    }}
+                    className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                  >
+                    Clear Filter
+                  </button>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+              title="Logout"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
           <div className="overflow-x-auto">
             <div className="grid grid-cols-4 gap-3 min-w-[600px]">
