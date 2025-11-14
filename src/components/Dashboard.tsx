@@ -549,6 +549,51 @@ function Dashboard({ onNavigate }: DashboardProps) {
         </div>
 
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Task Summary</h2>
+          <div className="overflow-x-auto">
+            <div className="grid grid-cols-4 gap-3 min-w-[600px]">
+              <div className="font-bold text-gray-700 text-center py-3"></div>
+              <div className="font-bold text-green-700 text-center py-3 bg-green-50 rounded-lg border border-green-200">Low</div>
+              <div className="font-bold text-amber-700 text-center py-3 bg-amber-50 rounded-lg border border-amber-200">Medium</div>
+              <div className="font-bold text-red-700 text-center py-3 bg-red-50 rounded-lg border border-red-200">High</div>
+
+              <div className="font-bold text-blue-700 text-right pr-4 py-3 bg-blue-50 rounded-lg border border-blue-200">Pending</div>
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+                {tasks.filter(t => t.priority === 'low' && t.status === 'pending').length}
+              </div>
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+                {tasks.filter(t => t.priority === 'medium' && t.status === 'pending').length}
+              </div>
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+                {tasks.filter(t => t.priority === 'high' && t.status === 'pending').length}
+              </div>
+
+              <div className="font-bold text-blue-700 text-right pr-4 py-3 bg-blue-50 rounded-lg border border-blue-200">In Progress</div>
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+                {tasks.filter(t => t.priority === 'low' && t.status === 'in-progress').length}
+              </div>
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+                {tasks.filter(t => t.priority === 'medium' && t.status === 'in-progress').length}
+              </div>
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+                {tasks.filter(t => t.priority === 'high' && t.status === 'in-progress').length}
+              </div>
+
+              <div className="font-bold text-blue-700 text-right pr-4 py-3 bg-blue-50 rounded-lg border border-blue-200">Done</div>
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+                {tasks.filter(t => t.priority === 'low' && t.status === 'done').length}
+              </div>
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+                {tasks.filter(t => t.priority === 'medium' && t.status === 'done').length}
+              </div>
+              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+                {tasks.filter(t => t.priority === 'high' && t.status === 'done').length}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Add New Task</h2>
           <div className="space-y-4">
             <input
