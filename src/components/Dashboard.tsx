@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, AlertCircle, Trash2 } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, Trash2, Sparkles, Save, Edit, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -7,6 +7,13 @@ interface Task {
   title: string;
   priority: 'low' | 'medium' | 'high';
   status: 'pending' | 'in-progress' | 'done';
+  created_at: string;
+}
+
+interface Subtask {
+  id: string;
+  task_id: string;
+  title: string;
   created_at: string;
 }
 
@@ -21,10 +28,21 @@ function Dashboard({ onNavigate }: DashboardProps) {
   const [status, setStatus] = useState<'pending' | 'in-progress' | 'done'>('pending');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [subtasks, setSubtasks] = useState<Record<string, Subtask[]>>({});
+  const [aiSuggestions, setAiSuggestions] = useState<Record<string, string[]>>({});
+  const [generatingAI, setGeneratingAI] = useState<Record<string, boolean>>({});
+  const [editingSubtask, setEditingSubtask] = useState<string | null>(null);
+  const [editSubtaskText, setEditSubtaskText] = useState('');
 
   useEffect(() => {
     fetchTasks();
   }, []);
+
+  useEffect(() => {
+    tasks.forEach(task => {
+      fetchSubtasks(task.id);
+    });
+  }, [tasks]);
 
   const fetchTasks = async () => {
     try {
@@ -129,6 +147,135 @@ function Dashboard({ onNavigate }: DashboardProps) {
       console.error('Error updating task priority:', err);
       setError('Failed to update task priority');
     }
+  };
+
+  const fetchSubtasks = async (taskId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('subtasks')
+        .select('*')
+        .eq('task_id', taskId)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setSubtasks(prev => ({ ...prev, [taskId]: data || [] }));
+    } catch (err) {
+      console.error('Error fetching subtasks:', err);
+    }
+  };
+
+  const generateSubtasks = async (taskId: string, taskTitle: string) => {
+    setGeneratingAI(prev => ({ ...prev, [taskId]: true }));
+    setError('');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('Please log in to generate subtasks');
+        return;
+      }
+
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-subtasks`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ taskTitle }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate subtasks');
+      }
+
+      const data = await response.json();
+      setAiSuggestions(prev => ({ ...prev, [taskId]: data.subtasks || [] }));
+    } catch (err) {
+      console.error('Error generating subtasks:', err);
+      setError('Failed to generate subtasks with AI');
+    } finally {
+      setGeneratingAI(prev => ({ ...prev, [taskId]: false }));
+    }
+  };
+
+  const saveSubtask = async (taskId: string, subtaskTitle: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setError('Please log in to save subtasks');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('subtasks')
+        .insert([{
+          task_id: taskId,
+          user_id: user.id,
+          title: subtaskTitle,
+        }]);
+
+      if (error) throw error;
+
+      await fetchSubtasks(taskId);
+
+      setAiSuggestions(prev => ({
+        ...prev,
+        [taskId]: (prev[taskId] || []).filter(s => s !== subtaskTitle)
+      }));
+    } catch (err) {
+      console.error('Error saving subtask:', err);
+      setError('Failed to save subtask');
+    }
+  };
+
+  const deleteSubtask = async (taskId: string, subtaskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('subtasks')
+        .delete()
+        .eq('id', subtaskId);
+
+      if (error) throw error;
+      await fetchSubtasks(taskId);
+    } catch (err) {
+      console.error('Error deleting subtask:', err);
+      setError('Failed to delete subtask');
+    }
+  };
+
+  const startEditSubtask = (subtask: Subtask) => {
+    setEditingSubtask(subtask.id);
+    setEditSubtaskText(subtask.title);
+  };
+
+  const saveEditSubtask = async (taskId: string, subtaskId: string) => {
+    if (!editSubtaskText.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('subtasks')
+        .update({ title: editSubtaskText, updated_at: new Date().toISOString() })
+        .eq('id', subtaskId);
+
+      if (error) throw error;
+
+      setEditingSubtask(null);
+      setEditSubtaskText('');
+      await fetchSubtasks(taskId);
+    } catch (err) {
+      console.error('Error updating subtask:', err);
+      setError('Failed to update subtask');
+    }
+  };
+
+  const cancelEditSubtask = () => {
+    setEditingSubtask(null);
+    setEditSubtaskText('');
   };
 
   const getPriorityStyle = (priority: string) => {
@@ -276,6 +423,87 @@ function Dashboard({ onNavigate }: DashboardProps) {
                         <option value="done">Done</option>
                       </select>
                     </div>
+                  </div>
+
+                  <div className="ml-9 mt-4 border-t border-blue-200 pt-4">
+                    <button
+                      onClick={() => generateSubtasks(task.id, task.title)}
+                      disabled={generatingAI[task.id]}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      {generatingAI[task.id] ? 'Generating...' : 'Generate Subtasks with AI'}
+                    </button>
+
+                    {aiSuggestions[task.id] && aiSuggestions[task.id].length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <p className="text-xs font-semibold text-gray-600">AI Suggestions:</p>
+                        {aiSuggestions[task.id].map((suggestion, idx) => (
+                          <div key={idx} className="flex items-center justify-between gap-2 p-2 bg-white rounded border border-gray-200">
+                            <span className="text-sm text-gray-700 flex-1">{suggestion}</span>
+                            <button
+                              onClick={() => saveSubtask(task.id, suggestion)}
+                              className="flex items-center gap-1 px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold rounded transition-all"
+                            >
+                              <Save className="w-3 h-3" />
+                              Save
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {subtasks[task.id] && subtasks[task.id].length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <p className="text-xs font-semibold text-gray-600">Subtasks:</p>
+                        {subtasks[task.id].map((subtask) => (
+                          <div key={subtask.id} className="flex items-center justify-between gap-2 p-2 bg-white rounded border border-blue-200">
+                            {editingSubtask === subtask.id ? (
+                              <>
+                                <input
+                                  type="text"
+                                  value={editSubtaskText}
+                                  onChange={(e) => setEditSubtaskText(e.target.value)}
+                                  className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => saveEditSubtask(task.id, subtask.id)}
+                                    className="p-1 bg-green-500 hover:bg-green-600 text-white rounded transition-all"
+                                  >
+                                    <Save className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    onClick={cancelEditSubtask}
+                                    className="p-1 bg-gray-400 hover:bg-gray-500 text-white rounded transition-all"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-sm text-gray-700 flex-1">{subtask.title}</span>
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => startEditSubtask(subtask)}
+                                    className="p-1 bg-blue-500 hover:bg-blue-600 text-white rounded transition-all"
+                                  >
+                                    <Edit className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    onClick={() => deleteSubtask(task.id, subtask.id)}
+                                    className="p-1 bg-red-500 hover:bg-red-600 text-white rounded transition-all"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
