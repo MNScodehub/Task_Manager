@@ -6,6 +6,7 @@ interface SignupPageProps {
 }
 
 function SignupPage({ onNavigate }: SignupPageProps) {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -29,6 +30,17 @@ function SignupPage({ onNavigate }: SignupPageProps) {
       }
 
       if (data.user) {
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .insert([{
+            id: data.user.id,
+            name: name.trim(),
+          }]);
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+        }
+
         onNavigate('dashboard');
       }
     } catch (err) {
@@ -54,6 +66,22 @@ function SignupPage({ onNavigate }: SignupPageProps) {
               {error}
             </div>
           )}
+
+          <div>
+            <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
+              Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter your name"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              required
+              disabled={loading}
+            />
+          </div>
 
           <div>
             <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">

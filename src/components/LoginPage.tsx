@@ -10,6 +10,9 @@ function LoginPage({ onNavigate }: LoginPageProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showNamePrompt, setShowNamePrompt] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +32,35 @@ function LoginPage({ onNavigate }: LoginPageProps) {
       }
 
       if (data.user) {
-        onNavigate('dashboard');
+        const { data: profile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('name')
+          .eq('id', data.user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+        }
+
+        if (!profile) {
+          const { error: insertError } = await supabase
+            .from('user_profiles')
+            .insert([{ id: data.user.id, name: '' }]);
+
+          if (insertError) {
+            console.error('Error creating profile:', insertError);
+          }
+
+          setUserId(data.user.id);
+          setShowNamePrompt(true);
+          setLoading(false);
+        } else if (!profile.name || profile.name.trim() === '') {
+          setUserId(data.user.id);
+          setShowNamePrompt(true);
+          setLoading(false);
+        } else {
+          onNavigate('dashboard');
+        }
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -37,9 +68,72 @@ function LoginPage({ onNavigate }: LoginPageProps) {
     }
   };
 
+  const handleSaveName = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userName.trim() || !userId) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ name: userName.trim(), updated_at: new Date().toISOString() })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      onNavigate('dashboard');
+    } catch (err) {
+      console.error('Error saving name:', err);
+      setError('Failed to save name');
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4">
-      <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
+      {showNamePrompt ? (
+        <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2 text-center">
+            Welcome!
+          </h1>
+          <p className="text-gray-600 mb-8 text-center">
+            Please tell us your preferred name to personalize your experience.
+          </p>
+          <form onSubmit={handleSaveName} className="space-y-6">
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+            <div>
+              <label htmlFor="userName" className="block text-sm font-semibold text-gray-700 mb-2">
+                Your Name
+              </label>
+              <input
+                type="text"
+                id="userName"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                placeholder="Enter your name"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                required
+                disabled={loading}
+                autoFocus
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading || !userName.trim()}
+              className="w-full px-8 py-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              {loading ? 'Saving...' : 'Continue'}
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
         <h1 className="text-3xl font-bold text-gray-800 mb-2 text-center">
           Login to Your Account
         </h1>
@@ -106,6 +200,7 @@ function LoginPage({ onNavigate }: LoginPageProps) {
           </button>
         </p>
       </div>
+      )}
     </div>
   );
 }

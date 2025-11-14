@@ -33,9 +33,11 @@ function Dashboard({ onNavigate }: DashboardProps) {
   const [generatingAI, setGeneratingAI] = useState<Record<string, boolean>>({});
   const [editingSubtask, setEditingSubtask] = useState<string | null>(null);
   const [editSubtaskText, setEditSubtaskText] = useState('');
+  const [userName, setUserName] = useState<string>('');
 
   useEffect(() => {
     fetchTasks();
+    fetchUserName();
   }, []);
 
   useEffect(() => {
@@ -43,6 +45,25 @@ function Dashboard({ onNavigate }: DashboardProps) {
       fetchSubtasks(task.id);
     });
   }, [tasks]);
+
+  const fetchUserName = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('name')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile && profile.name) {
+        setUserName(profile.name);
+      }
+    } catch (err) {
+      console.error('Error fetching user name:', err);
+    }
+  };
 
   const fetchTasks = async () => {
     try {
@@ -307,10 +328,10 @@ function Dashboard({ onNavigate }: DashboardProps) {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold text-gray-800 mb-2 text-center">
-          Your Tasks
+          {userName ? `Welcome back, ${userName}!` : 'Your Tasks'}
         </h1>
         <p className="text-gray-600 text-center mb-10">
-          Easily manage and visualize your tasks.
+          {userName ? 'Ready to conquer your day?' : 'Easily manage and visualize your tasks.'}
         </p>
 
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
