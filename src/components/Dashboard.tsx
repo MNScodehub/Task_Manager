@@ -8,6 +8,7 @@ interface Task {
   priority: 'low' | 'medium' | 'high';
   status: 'pending' | 'in-progress' | 'done';
   created_at: string;
+  similarity?: number;
 }
 
 interface Subtask {
@@ -505,28 +506,7 @@ function Dashboard({ onNavigate }: DashboardProps) {
               {userName ? 'Ready to conquer your day?' : 'Easily manage and visualize your tasks.'}
             </p>
           </div>
-          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4">
-            <div className="flex flex-col gap-2 w-full md:w-auto">
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSmartSearch()}
-                  placeholder="Smart Search"
-                  className="flex-1 md:w-56 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
-                />
-                <button
-                  onClick={handleSmartSearch}
-                  disabled={searching}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                >
-                  <Search className="w-4 h-4" />
-                  <span className="hidden sm:inline">{searching ? 'Searching...' : 'Search'}</span>
-                </button>
-              </div>
-            </div>
-            <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col items-center gap-3">
             {profilePictureUrl ? (
               <div className="relative">
                 <img
@@ -567,34 +547,6 @@ function Dashboard({ onNavigate }: DashboardProps) {
             </div>
           </div>
         </div>
-
-        {searchResults.length > 0 && (
-          <div className="bg-blue-50 rounded-xl shadow-md p-6 mb-8 border border-blue-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Search Results</h3>
-            <div className="space-y-3">
-              {searchResults.map((task) => (
-                <div
-                  key={task.id}
-                  className="bg-white rounded-lg p-4 shadow-sm border border-blue-100 hover:shadow-md transition-all"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-800">{task.title}</h4>
-                      <div className="flex gap-2 mt-2">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getPriorityStyle(task.priority)}`}>
-                          {task.priority}
-                        </span>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusStyle(task.status)}`}>
-                          {task.status}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Add New Task</h2>
@@ -655,6 +607,75 @@ function Dashboard({ onNavigate }: DashboardProps) {
               Logout
             </button>
           </div>
+
+          <div className="mb-6">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSmartSearch()}
+                placeholder="Semantic Search (e.g., 'buy groceries', 'fix bugs')"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+              />
+              <button
+                onClick={handleSmartSearch}
+                disabled={searching}
+                className="flex items-center justify-center gap-2 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                <Search className="w-4 h-4" />
+                {searching ? 'Searching...' : 'Smart Search'}
+              </button>
+              {searchResults.length > 0 && (
+                <button
+                  onClick={() => {
+                    setSearchResults([]);
+                    setSearchQuery('');
+                  }}
+                  className="flex items-center justify-center gap-2 px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white text-sm font-semibold rounded-lg shadow-md transition-all whitespace-nowrap"
+                >
+                  <X className="w-4 h-4" />
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          {searchResults.length > 0 && (
+            <div className="bg-blue-50 rounded-xl shadow-md p-6 mb-6 border border-blue-200">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Search Results ({searchResults.length} matches)</h3>
+              <div className="space-y-3">
+                {searchResults.map((task) => (
+                  <div
+                    key={task.id}
+                    className="bg-white rounded-lg p-4 shadow-sm border border-blue-100 hover:shadow-md transition-all"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-medium text-gray-800">{task.title}</h4>
+                          {task.similarity && (
+                            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full border border-green-300">
+                              {Math.round(task.similarity * 100)}% match
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getPriorityStyle(task.priority)}`}>
+                            {task.priority}
+                          </span>
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusStyle(task.status)}`}>
+                            {task.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
               {error}
@@ -818,47 +839,46 @@ function Dashboard({ onNavigate }: DashboardProps) {
             </div>
           )}
         </div>
-      </div>
 
-      {showUploadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">
-                {profilePictureUrl ? 'Update Profile Picture' : 'Upload Profile Picture'}
-              </h2>
-              <button
-                onClick={() => setShowUploadModal(false)}
-                className="text-gray-500 hover:text-gray-700 p-1"
-              >
-                <X className="w-6 h-6" />
-              </button>
+        {showUploadModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  {profilePictureUrl ? 'Update Profile Picture' : 'Upload Profile Picture'}
+                </h2>
+                <button
+                  onClick={() => setShowUploadModal(false)}
+                  className="text-gray-500 hover:text-gray-700 p-1"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  id="profile-picture-input-modal"
+                  disabled={uploading}
+                />
+                <label
+                  htmlFor="profile-picture-input-modal"
+                  className={`flex items-center justify-center gap-2 w-full px-6 py-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <Upload className="w-5 h-5" />
+                  {uploading ? 'Uploading...' : 'Select and Upload New Picture'}
+                </label>
+              </div>
+
+              <p className="text-xs text-gray-500 text-center">
+                Supported formats: JPG, PNG, GIF (Max 5MB)
+              </p>
             </div>
-
-            <div className="mb-6">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-                id="profile-picture-input-modal"
-                disabled={uploading}
-              />
-              <label
-                htmlFor="profile-picture-input-modal"
-                className={`flex items-center justify-center gap-2 w-full px-6 py-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <Upload className="w-5 h-5" />
-                {uploading ? 'Uploading...' : 'Select and Upload New Picture'}
-              </label>
-            </div>
-
-            <p className="text-xs text-gray-500 text-center">
-              Supported formats: JPG, PNG, GIF (Max 5MB)
-            </p>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 }
