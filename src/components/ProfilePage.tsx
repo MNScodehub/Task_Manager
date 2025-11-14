@@ -23,7 +23,7 @@ function ProfilePage({ onNavigate }: ProfilePageProps) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        setError('Please log in to view profile');
+        onNavigate('login');
         return;
       }
 

@@ -36,9 +36,20 @@ function Dashboard({ onNavigate }: DashboardProps) {
   const [userName, setUserName] = useState<string>('');
 
   useEffect(() => {
+    checkAuthAndLoadData();
+  }, []);
+
+  const checkAuthAndLoadData = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      if (onNavigate) {
+        onNavigate('login');
+      }
+      return;
+    }
     fetchTasks();
     fetchUserName();
-  }, []);
+  };
 
   useEffect(() => {
     tasks.forEach(task => {
