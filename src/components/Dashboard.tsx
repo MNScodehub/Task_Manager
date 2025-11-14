@@ -131,21 +131,21 @@ function Dashboard({ onNavigate }: DashboardProps) {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityStyle = (priority: string) => {
     switch (priority) {
-      case 'high': return 'text-red-600 bg-red-50';
-      case 'medium': return 'text-orange-600 bg-orange-50';
-      case 'low': return 'text-green-600 bg-green-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case 'high': return 'bg-red-200 text-red-800 border-red-300';
+      case 'medium': return 'bg-amber-200 text-amber-800 border-amber-300';
+      case 'low': return 'bg-green-200 text-green-800 border-green-300';
+      default: return 'bg-gray-200 text-gray-800 border-gray-300';
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'done': return 'text-green-600 bg-green-50';
-      case 'in-progress': return 'text-blue-600 bg-blue-50';
-      case 'pending': return 'text-gray-600 bg-gray-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case 'done': return 'bg-green-100 text-green-800 border-green-300';
+      case 'in-progress': return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'pending': return 'bg-gray-100 text-gray-700 border-gray-300';
+      default: return 'bg-gray-100 text-gray-700 border-gray-300';
     }
   };
 
@@ -167,14 +167,71 @@ function Dashboard({ onNavigate }: DashboardProps) {
         </p>
 
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Task List</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Add New Task</h2>
+          <div className="space-y-4">
+            <input
+              type="text"
+              value={newTask}
+              onChange={(e) => setNewTask(e.target.value)}
+              placeholder="Task title"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              disabled={loading}
+            />
+            <div className="flex gap-4 items-end">
+              <div className="flex-1">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Priority</label>
+                <select
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value as 'low' | 'medium' | 'high')}
+                  className={`w-auto min-w-[100px] px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium ${getPriorityStyle(priority)}`}
+                  disabled={loading}
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as 'pending' | 'in-progress' | 'done')}
+                  className={`w-auto min-w-[120px] px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium ${getStatusStyle(status)}`}
+                  disabled={loading}
+                >
+                  <option value="pending">Pending</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="done">Done</option>
+                </select>
+              </div>
+              <button
+                onClick={handleAddTask}
+                disabled={loading || !newTask.trim()}
+                className="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                {loading ? 'Adding...' : 'Add Task'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">Task List</h2>
+            <button
+              onClick={handleLogout}
+              className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+            >
+              Logout
+            </button>
+          </div>
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
               {error}
             </div>
           )}
           {tasks.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No tasks yet. Add your first task below!</p>
+            <p className="text-gray-500 text-center py-8">No tasks yet. Add your first task above!</p>
           ) : (
             <div className="space-y-4">
               {tasks.map((task) => (
@@ -194,13 +251,13 @@ function Dashboard({ onNavigate }: DashboardProps) {
                       <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 ml-9">
+                  <div className="flex gap-3 ml-9">
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1">Priority</label>
                       <select
                         value={task.priority}
                         onChange={(e) => handleUpdatePriority(task.id, e.target.value as 'low' | 'medium' | 'high')}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className={`w-auto min-w-[100px] px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium ${getPriorityStyle(task.priority)}`}
                       >
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -212,7 +269,7 @@ function Dashboard({ onNavigate }: DashboardProps) {
                       <select
                         value={task.status}
                         onChange={(e) => handleUpdateStatus(task.id, e.target.value as 'pending' | 'in-progress' | 'done')}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className={`w-auto min-w-[120px] px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium ${getStatusStyle(task.status)}`}
                       >
                         <option value="pending">Pending</option>
                         <option value="in-progress">In Progress</option>
@@ -224,63 +281,6 @@ function Dashboard({ onNavigate }: DashboardProps) {
               ))}
             </div>
           )}
-        </div>
-
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Add New Task</h2>
-          <div className="space-y-4">
-            <input
-              type="text"
-              value={newTask}
-              onChange={(e) => setNewTask(e.target.value)}
-              placeholder="Task title"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              disabled={loading}
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Priority</label>
-                <select
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value as 'low' | 'medium' | 'high')}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  disabled={loading}
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as 'pending' | 'in-progress' | 'done')}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  disabled={loading}
-                >
-                  <option value="pending">Pending</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="done">Done</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex gap-4 justify-center">
-              <button
-                onClick={handleAddTask}
-                disabled={loading || !newTask.trim()}
-                className="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              >
-                {loading ? 'Adding...' : 'Add'}
-              </button>
-              <button
-                onClick={handleLogout}
-                className="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
