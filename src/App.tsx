@@ -2,7 +2,6 @@ import { useState } from 'react';
 import LoginPage from './components/LoginPage';
 import SignupPage from './components/SignupPage';
 import Dashboard from './components/Dashboard';
-import ProfilePage from './components/ProfilePage';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -21,10 +20,6 @@ function App() {
 
   if (currentPage === 'dashboard') {
     return <Dashboard onNavigate={handleNavigate} />;
-  }
-
-  if (currentPage === 'profile') {
-    return <ProfilePage onNavigate={handleNavigate} />;
   }
 
   return (
