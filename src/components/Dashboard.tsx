@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, AlertCircle, Trash2, Sparkles, Save, Edit, X, User, Upload, ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, Trash2, Sparkles, Save, Edit, X, User, Upload, ChevronDown, ChevronUp, Search, LogOut } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -499,6 +499,15 @@ function Dashboard({ onNavigate }: DashboardProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handleLogout}
+            className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
+        </div>
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
           <div className="flex-1">
             <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2">
@@ -763,14 +772,8 @@ function Dashboard({ onNavigate }: DashboardProps) {
         </div>
 
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-          <div className="flex justify-between items-center mb-6">
+          <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-800">Task List</h2>
-            <button
-              onClick={handleLogout}
-              className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
-            >
-              Logout
-            </button>
           </div>
 
           <div className="mb-6">
