@@ -345,18 +345,20 @@ function Dashboard({ onNavigate }: DashboardProps) {
 
     if (!file.type.startsWith('image/')) {
       setError('Please select an image file');
+      event.target.value = '';
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
       setError('File size must be less than 5MB');
+      event.target.value = '';
       return;
     }
 
-    await uploadProfilePicture(file);
+    await uploadProfilePicture(file, event);
   };
 
-  const uploadProfilePicture = async (file: File) => {
+  const uploadProfilePicture = async (file: File, event?: React.ChangeEvent<HTMLInputElement>) => {
     setUploading(true);
     setError('');
 
@@ -404,6 +406,10 @@ function Dashboard({ onNavigate }: DashboardProps) {
 
       setProfilePictureUrl(publicUrl);
       setShowUploadModal(false);
+
+      if (event?.target) {
+        event.target.value = '';
+      }
     } catch (err: any) {
       console.error('Error uploading profile picture:', err);
       setError(err.message || 'Failed to upload profile picture');
@@ -424,7 +430,7 @@ function Dashboard({ onNavigate }: DashboardProps) {
               {userName ? 'Ready to conquer your day?' : 'Easily manage and visualize your tasks.'}
             </p>
           </div>
-          <div className="relative group">
+          <div className="flex flex-col items-center gap-3">
             {profilePictureUrl ? (
               <div className="relative">
                 <img
@@ -441,18 +447,26 @@ function Dashboard({ onNavigate }: DashboardProps) {
                 </button>
               </div>
             ) : (
-              <div className="relative">
+              <>
                 <div className="w-32 h-32 rounded-full bg-blue-200 flex items-center justify-center border-4 border-white shadow-lg">
                   <User className="w-16 h-16 text-blue-500" />
                 </div>
-                <button
-                  onClick={() => setShowUploadModal(true)}
-                  className="absolute bottom-0 right-0 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg transition-all"
-                  title="Upload profile picture"
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  id="profile-picture-upload"
+                  disabled={uploading}
+                />
+                <label
+                  htmlFor="profile-picture-upload"
+                  className={`flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <Upload className="w-4 h-4" />
-                </button>
-              </div>
+                  {uploading ? 'Uploading...' : 'Upload Your Profile Picture'}
+                </label>
+              </>
             )}
           </div>
         </div>
