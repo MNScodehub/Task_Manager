@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, AlertCircle, Trash2, Sparkles, Save, Edit, X, User, Upload, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, Trash2, Sparkles, Save, Edit, X, User, Upload, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -38,6 +38,9 @@ function Dashboard({ onNavigate }: DashboardProps) {
   const [uploading, setUploading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [collapsedTasks, setCollapsedTasks] = useState<Record<string, boolean>>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Task[]>([]);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     checkAuthAndLoadData();
@@ -118,16 +121,40 @@ function Dashboard({ onNavigate }: DashboardProps) {
         return;
       }
 
-      const { error } = await supabase
+      const { data: insertedTask, error } = await supabase
         .from('tasks')
         .insert([{
           user_id: user.id,
           title: newTask,
           priority,
           status,
-        }]);
+        }])
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Generate embedding for the new task
+      if (insertedTask) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-task-embedding`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                taskId: insertedTask.id,
+                title: insertedTask.title,
+              }),
+            });
+          }
+        } catch (embeddingError) {
+          console.error('Error generating embedding:', embeddingError);
+        }
+      }
 
       setNewTask('');
       setPriority('medium');
@@ -322,6 +349,46 @@ function Dashboard({ onNavigate }: DashboardProps) {
     }));
   };
 
+  const handleSmartSearch = async () => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearching(true);
+    setError('');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('Please log in to search');
+        return;
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/smart-search`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: searchQuery }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+
+      const data = await response.json();
+      setSearchResults(data.tasks || []);
+    } catch (err) {
+      console.error('Error searching:', err);
+      setError('Search failed. Please try again.');
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
   const getPriorityStyle = (priority: string) => {
     switch (priority) {
       case 'high': return 'bg-red-200 text-red-800 border-red-300';
@@ -427,18 +494,39 @@ function Dashboard({ onNavigate }: DashboardProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex-1">
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2">
               {userName ? `Welcome back, ${userName}!` : 'Your Tasks'}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-sm md:text-base text-gray-600">
               {userName ? 'Ready to conquer your day?' : 'Easily manage and visualize your tasks.'}
             </p>
           </div>
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4">
+            <div className="flex flex-col gap-2 w-full md:w-auto">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSmartSearch()}
+                  placeholder="Smart Search"
+                  className="flex-1 md:w-56 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                />
+                <button
+                  onClick={handleSmartSearch}
+                  disabled={searching}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  <Search className="w-4 h-4" />
+                  <span className="hidden sm:inline">{searching ? 'Searching...' : 'Search'}</span>
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-3">
             {profilePictureUrl ? (
               <div className="relative">
                 <img
@@ -455,7 +543,7 @@ function Dashboard({ onNavigate }: DashboardProps) {
                 </button>
               </div>
             ) : (
-              <>
+              <div className="flex flex-col items-center gap-3">
                 <div className="w-32 h-32 rounded-full bg-blue-200 flex items-center justify-center border-4 border-white shadow-lg">
                   <User className="w-16 h-16 text-blue-500" />
                 </div>
@@ -474,10 +562,39 @@ function Dashboard({ onNavigate }: DashboardProps) {
                   <Upload className="w-4 h-4" />
                   {uploading ? 'Uploading...' : 'Upload Your Profile Picture'}
                 </label>
-              </>
+              </div>
             )}
+            </div>
           </div>
         </div>
+
+        {searchResults.length > 0 && (
+          <div className="bg-blue-50 rounded-xl shadow-md p-6 mb-8 border border-blue-200">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Search Results</h3>
+            <div className="space-y-3">
+              {searchResults.map((task) => (
+                <div
+                  key={task.id}
+                  className="bg-white rounded-lg p-4 shadow-sm border border-blue-100 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-800">{task.title}</h4>
+                      <div className="flex gap-2 mt-2">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getPriorityStyle(task.priority)}`}>
+                          {task.priority}
+                        </span>
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusStyle(task.status)}`}>
+                          {task.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Add New Task</h2>
