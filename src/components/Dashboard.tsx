@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, AlertCircle, Trash2, Sparkles, Save, Edit, X, User, Upload } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, Trash2, Sparkles, Save, Edit, X, User, Upload, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -37,6 +37,7 @@ function Dashboard({ onNavigate }: DashboardProps) {
   const [profilePictureUrl, setProfilePictureUrl] = useState<string>('');
   const [uploading, setUploading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [collapsedTasks, setCollapsedTasks] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     checkAuthAndLoadData();
@@ -314,6 +315,13 @@ function Dashboard({ onNavigate }: DashboardProps) {
     setEditSubtaskText('');
   };
 
+  const toggleTaskCollapse = (taskId: string) => {
+    setCollapsedTasks(prev => ({
+      ...prev,
+      [taskId]: !prev[taskId]
+    }));
+  };
+
   const getPriorityStyle = (priority: string) => {
     switch (priority) {
       case 'high': return 'bg-red-200 text-red-800 border-red-300';
@@ -584,37 +592,60 @@ function Dashboard({ onNavigate }: DashboardProps) {
                   </div>
 
                   <div className="ml-9 mt-4 border-t border-blue-200 pt-4">
-                    <button
-                      onClick={() => generateSubtasks(task.id, task.title)}
-                      disabled={generatingAI[task.id]}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      {generatingAI[task.id] ? 'Generating...' : 'Generate Subtasks with AI'}
-                    </button>
+                    <div className="flex items-center justify-between mb-2">
+                      <button
+                        onClick={() => generateSubtasks(task.id, task.title)}
+                        disabled={generatingAI[task.id]}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        {generatingAI[task.id] ? 'Generating...' : 'Generate Subtasks with AI'}
+                      </button>
 
-                    {aiSuggestions[task.id] && aiSuggestions[task.id].length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        <p className="text-xs font-semibold text-gray-600">AI Suggestions:</p>
-                        {aiSuggestions[task.id].map((suggestion, idx) => (
-                          <div key={idx} className="flex items-center justify-between gap-2 p-2 bg-white rounded border border-gray-200">
-                            <span className="text-sm text-gray-700 flex-1">{suggestion}</span>
-                            <button
-                              onClick={() => saveSubtask(task.id, suggestion)}
-                              className="flex items-center gap-1 px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold rounded transition-all"
-                            >
-                              <Save className="w-3 h-3" />
-                              Save
-                            </button>
+                      {(subtasks[task.id]?.length > 0 || aiSuggestions[task.id]?.length > 0) && (
+                        <button
+                          onClick={() => toggleTaskCollapse(task.id)}
+                          className="flex items-center gap-1 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-blue-100 rounded-lg transition-all"
+                        >
+                          {collapsedTasks[task.id] ? (
+                            <>
+                              <ChevronDown className="w-4 h-4" />
+                              <span>Expand</span>
+                            </>
+                          ) : (
+                            <>
+                              <ChevronUp className="w-4 h-4" />
+                              <span>Collapse</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+
+                    {!collapsedTasks[task.id] && (
+                      <>
+                        {aiSuggestions[task.id] && aiSuggestions[task.id].length > 0 && (
+                          <div className="mt-3 space-y-2">
+                            <p className="text-xs font-semibold text-gray-600">AI Suggestions:</p>
+                            {aiSuggestions[task.id].map((suggestion, idx) => (
+                              <div key={idx} className="flex items-center justify-between gap-2 p-2 bg-white rounded border border-gray-200">
+                                <span className="text-sm text-gray-700 flex-1">{suggestion}</span>
+                                <button
+                                  onClick={() => saveSubtask(task.id, suggestion)}
+                                  className="flex items-center gap-1 px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs font-semibold rounded transition-all"
+                                >
+                                  <Save className="w-3 h-3" />
+                                  Save
+                                </button>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    )}
+                        )}
 
-                    {subtasks[task.id] && subtasks[task.id].length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        <p className="text-xs font-semibold text-gray-600">Subtasks:</p>
-                        {subtasks[task.id].map((subtask) => (
+                        {subtasks[task.id] && subtasks[task.id].length > 0 && (
+                          <div className="mt-3 space-y-2">
+                            <p className="text-xs font-semibold text-gray-600">Subtasks:</p>
+                            {subtasks[task.id].map((subtask) => (
                           <div key={subtask.id} className="flex items-center justify-between gap-2 p-2 bg-white rounded border border-blue-200">
                             {editingSubtask === subtask.id ? (
                               <>
@@ -661,6 +692,8 @@ function Dashboard({ onNavigate }: DashboardProps) {
                           </div>
                         ))}
                       </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
