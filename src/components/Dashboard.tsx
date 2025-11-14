@@ -42,6 +42,8 @@ function Dashboard({ onNavigate }: DashboardProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Task[]>([]);
   const [searching, setSearching] = useState(false);
+  const [filterPriority, setFilterPriority] = useState<'low' | 'medium' | 'high' | null>(null);
+  const [filterStatus, setFilterStatus] = useState<'pending' | 'in-progress' | 'done' | null>(null);
 
   useEffect(() => {
     checkAuthAndLoadData();
@@ -497,7 +499,7 @@ function Dashboard({ onNavigate }: DashboardProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
           <div className="flex-1">
             <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2">
               {userName ? `Welcome back, ${userName}!` : 'Your Tasks'}
@@ -549,7 +551,28 @@ function Dashboard({ onNavigate }: DashboardProps) {
         </div>
 
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Task Summary</h2>
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Task Summary</h2>
+            <p className="text-sm text-gray-600">
+              {userName ? `${userName}, here's how your tasks are organized. Click any number to filter!` : 'Click on any cell to filter your tasks by priority and status'}
+            </p>
+            {(filterPriority || filterStatus) && (
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-sm text-blue-600 font-medium">
+                  Filtering: {filterPriority ? `${filterPriority} priority` : ''} {filterPriority && filterStatus ? '&' : ''} {filterStatus ? `${filterStatus} status` : ''}
+                </span>
+                <button
+                  onClick={() => {
+                    setFilterPriority(null);
+                    setFilterStatus(null);
+                  }}
+                  className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                >
+                  Clear Filter
+                </button>
+              </div>
+            )}
+          </div>
           <div className="overflow-x-auto">
             <div className="grid grid-cols-4 gap-3 min-w-[600px]">
               <div className="font-bold text-gray-700 text-center py-3"></div>
@@ -558,37 +581,127 @@ function Dashboard({ onNavigate }: DashboardProps) {
               <div className="font-bold text-red-700 text-center py-3 bg-red-50 rounded-lg border border-red-200">High</div>
 
               <div className="font-bold text-blue-700 text-right pr-4 py-3 bg-blue-50 rounded-lg border border-blue-200">Pending</div>
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+              <button
+                onClick={() => {
+                  setFilterPriority('low');
+                  setFilterStatus('pending');
+                }}
+                className={`rounded-lg p-4 flex items-center justify-center text-2xl font-bold transition-all ${
+                  filterPriority === 'low' && filterStatus === 'pending'
+                    ? 'bg-blue-200 border-4 border-blue-500 text-blue-900 scale-105'
+                    : 'bg-gray-50 border-2 border-gray-200 text-gray-700 hover:bg-blue-100 hover:border-blue-300 cursor-pointer'
+                }`}
+              >
                 {tasks.filter(t => t.priority === 'low' && t.status === 'pending').length}
-              </div>
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+              </button>
+              <button
+                onClick={() => {
+                  setFilterPriority('medium');
+                  setFilterStatus('pending');
+                }}
+                className={`rounded-lg p-4 flex items-center justify-center text-2xl font-bold transition-all ${
+                  filterPriority === 'medium' && filterStatus === 'pending'
+                    ? 'bg-blue-200 border-4 border-blue-500 text-blue-900 scale-105'
+                    : 'bg-gray-50 border-2 border-gray-200 text-gray-700 hover:bg-blue-100 hover:border-blue-300 cursor-pointer'
+                }`}
+              >
                 {tasks.filter(t => t.priority === 'medium' && t.status === 'pending').length}
-              </div>
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+              </button>
+              <button
+                onClick={() => {
+                  setFilterPriority('high');
+                  setFilterStatus('pending');
+                }}
+                className={`rounded-lg p-4 flex items-center justify-center text-2xl font-bold transition-all ${
+                  filterPriority === 'high' && filterStatus === 'pending'
+                    ? 'bg-blue-200 border-4 border-blue-500 text-blue-900 scale-105'
+                    : 'bg-gray-50 border-2 border-gray-200 text-gray-700 hover:bg-blue-100 hover:border-blue-300 cursor-pointer'
+                }`}
+              >
                 {tasks.filter(t => t.priority === 'high' && t.status === 'pending').length}
-              </div>
+              </button>
 
               <div className="font-bold text-blue-700 text-right pr-4 py-3 bg-blue-50 rounded-lg border border-blue-200">In Progress</div>
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+              <button
+                onClick={() => {
+                  setFilterPriority('low');
+                  setFilterStatus('in-progress');
+                }}
+                className={`rounded-lg p-4 flex items-center justify-center text-2xl font-bold transition-all ${
+                  filterPriority === 'low' && filterStatus === 'in-progress'
+                    ? 'bg-blue-200 border-4 border-blue-500 text-blue-900 scale-105'
+                    : 'bg-gray-50 border-2 border-gray-200 text-gray-700 hover:bg-blue-100 hover:border-blue-300 cursor-pointer'
+                }`}
+              >
                 {tasks.filter(t => t.priority === 'low' && t.status === 'in-progress').length}
-              </div>
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+              </button>
+              <button
+                onClick={() => {
+                  setFilterPriority('medium');
+                  setFilterStatus('in-progress');
+                }}
+                className={`rounded-lg p-4 flex items-center justify-center text-2xl font-bold transition-all ${
+                  filterPriority === 'medium' && filterStatus === 'in-progress'
+                    ? 'bg-blue-200 border-4 border-blue-500 text-blue-900 scale-105'
+                    : 'bg-gray-50 border-2 border-gray-200 text-gray-700 hover:bg-blue-100 hover:border-blue-300 cursor-pointer'
+                }`}
+              >
                 {tasks.filter(t => t.priority === 'medium' && t.status === 'in-progress').length}
-              </div>
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+              </button>
+              <button
+                onClick={() => {
+                  setFilterPriority('high');
+                  setFilterStatus('in-progress');
+                }}
+                className={`rounded-lg p-4 flex items-center justify-center text-2xl font-bold transition-all ${
+                  filterPriority === 'high' && filterStatus === 'in-progress'
+                    ? 'bg-blue-200 border-4 border-blue-500 text-blue-900 scale-105'
+                    : 'bg-gray-50 border-2 border-gray-200 text-gray-700 hover:bg-blue-100 hover:border-blue-300 cursor-pointer'
+                }`}
+              >
                 {tasks.filter(t => t.priority === 'high' && t.status === 'in-progress').length}
-              </div>
+              </button>
 
               <div className="font-bold text-blue-700 text-right pr-4 py-3 bg-blue-50 rounded-lg border border-blue-200">Done</div>
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+              <button
+                onClick={() => {
+                  setFilterPriority('low');
+                  setFilterStatus('done');
+                }}
+                className={`rounded-lg p-4 flex items-center justify-center text-2xl font-bold transition-all ${
+                  filterPriority === 'low' && filterStatus === 'done'
+                    ? 'bg-blue-200 border-4 border-blue-500 text-blue-900 scale-105'
+                    : 'bg-gray-50 border-2 border-gray-200 text-gray-700 hover:bg-blue-100 hover:border-blue-300 cursor-pointer'
+                }`}
+              >
                 {tasks.filter(t => t.priority === 'low' && t.status === 'done').length}
-              </div>
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+              </button>
+              <button
+                onClick={() => {
+                  setFilterPriority('medium');
+                  setFilterStatus('done');
+                }}
+                className={`rounded-lg p-4 flex items-center justify-center text-2xl font-bold transition-all ${
+                  filterPriority === 'medium' && filterStatus === 'done'
+                    ? 'bg-blue-200 border-4 border-blue-500 text-blue-900 scale-105'
+                    : 'bg-gray-50 border-2 border-gray-200 text-gray-700 hover:bg-blue-100 hover:border-blue-300 cursor-pointer'
+                }`}
+              >
                 {tasks.filter(t => t.priority === 'medium' && t.status === 'done').length}
-              </div>
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4 flex items-center justify-center text-2xl font-bold text-gray-700 hover:bg-gray-100 transition-colors">
+              </button>
+              <button
+                onClick={() => {
+                  setFilterPriority('high');
+                  setFilterStatus('done');
+                }}
+                className={`rounded-lg p-4 flex items-center justify-center text-2xl font-bold transition-all ${
+                  filterPriority === 'high' && filterStatus === 'done'
+                    ? 'bg-blue-200 border-4 border-blue-500 text-blue-900 scale-105'
+                    : 'bg-gray-50 border-2 border-gray-200 text-gray-700 hover:bg-blue-100 hover:border-blue-300 cursor-pointer'
+                }`}
+              >
                 {tasks.filter(t => t.priority === 'high' && t.status === 'done').length}
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -730,10 +843,25 @@ function Dashboard({ onNavigate }: DashboardProps) {
             <p className="text-gray-500 text-center py-8">No tasks yet. Add your first task above!</p>
           ) : (
             <div className="space-y-4">
-              {tasks.map((task) => (
+              {tasks
+                .sort((a, b) => {
+                  const aMatches = (!filterPriority || a.priority === filterPriority) && (!filterStatus || a.status === filterStatus);
+                  const bMatches = (!filterPriority || b.priority === filterPriority) && (!filterStatus || b.status === filterStatus);
+
+                  if (aMatches && !bMatches) return -1;
+                  if (!aMatches && bMatches) return 1;
+                  return 0;
+                })
+                .map((task) => {
+                  const isFiltered = (!filterPriority || task.priority === filterPriority) && (!filterStatus || task.status === filterStatus);
+                  return (
                 <div
                   key={task.id}
-                  className="flex flex-col gap-3 p-5 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                  className={`flex flex-col gap-3 p-5 rounded-lg transition-all ${
+                    isFiltered && (filterPriority || filterStatus)
+                      ? 'bg-blue-100 border-2 border-blue-400 shadow-md'
+                      : 'bg-blue-50 hover:bg-blue-100'
+                  }`}
                 >
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="text-blue-500 w-6 h-6 flex-shrink-0 mt-1" />
@@ -880,7 +1008,8 @@ function Dashboard({ onNavigate }: DashboardProps) {
                     )}
                   </div>
                 </div>
-              ))}
+                  );
+                })}
             </div>
           )}
         </div>
