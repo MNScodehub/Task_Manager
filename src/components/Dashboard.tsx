@@ -691,14 +691,15 @@ function Dashboard({ onNavigate }: DashboardProps) {
                 accept="image/*"
                 onChange={handleFileSelect}
                 className="hidden"
-                id="profile-picture-input"
+                id="profile-picture-input-modal"
+                disabled={uploading}
               />
               <label
-                htmlFor="profile-picture-input"
-                className="flex items-center justify-center gap-2 w-full px-6 py-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 cursor-pointer"
+                htmlFor="profile-picture-input-modal"
+                className={`flex items-center justify-center gap-2 w-full px-6 py-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <Upload className="w-5 h-5" />
-                {uploading ? 'Uploading...' : 'Choose File'}
+                {uploading ? 'Uploading...' : 'Select and Upload New Picture'}
               </label>
             </div>
 
