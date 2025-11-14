@@ -502,7 +502,7 @@ function Dashboard({ onNavigate }: DashboardProps) {
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
           <div className="flex-1">
             <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2">
-              {userName ? `Welcome back, ${userName}!` : 'Your Tasks'}
+              {userName ? `Welcome${tasks.length > 0 ? ' back' : ''}, ${userName}!` : 'Your Tasks'}
             </h1>
             <p className="text-sm md:text-base text-gray-600">
               {userName ? 'Ready to conquer your day?' : 'Easily manage and visualize your tasks.'}
