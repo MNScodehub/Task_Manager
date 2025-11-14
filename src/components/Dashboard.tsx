@@ -554,7 +554,14 @@ function Dashboard({ onNavigate }: DashboardProps) {
           <div className="mb-4">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Task Summary</h2>
             <p className="text-sm text-gray-600">
-              {userName ? `${userName}, here's how your tasks are organized. Click any number to filter!` : 'Click on any cell to filter your tasks by priority and status'}
+              {tasks.length === 0
+                ? (userName
+                    ? `${userName}, start logging your tasks to track your accomplishments and see them visualized here!`
+                    : 'Start logging your tasks to track your accomplishments and see them visualized here!')
+                : (userName
+                    ? `${userName}, here's how your tasks are organized. Click any number to filter!`
+                    : 'Click on any cell to filter your tasks by priority and status')
+              }
             </p>
             {(filterPriority || filterStatus) && (
               <div className="mt-3 flex items-center gap-2">
